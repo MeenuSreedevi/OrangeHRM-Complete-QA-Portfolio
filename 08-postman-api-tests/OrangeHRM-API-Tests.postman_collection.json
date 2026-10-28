@@ -1,0 +1,378 @@
+{
+  "info": {
+    "name": "OrangeHRM Login & API QA Portfolio \u2014 Safe Read-Only Tests",
+    "_postman_id": "bd6989ba-c4e6-4c96-b1bb-d712f7c765e0",
+    "description": "Importable portfolio collection. Run only in an authorized environment. The documented 5.x API uses OAuth 2.0 Authorization Code + PKCE; tokens are NOT included. HTTP expectations are conditional on access. Do not indiscriminately run all requests against shared public demo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 \u2014 API Discovery (manual)",
+      "item": [
+        {
+          "name": "Login request \u2014 capture in browser first",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Documentation-only GET navigation to sign-in page. NOT a login API. In Chrome DevTools Network capture actual login request/headers/payload, then create a separate sanitized request. Do not export cookies, passwords or CSRF tokens."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 \u2014 Authorized Read-Only Positive",
+      "description": "Requires genuine OAuth access token and permission; status 200 is expected only when authorized. Otherwise record Blocked; do not change tests to accept arbitrary errors.",
+      "item": [
+        {
+          "name": "API-TC-001 Directory list \u2014 authorized",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v2/directory/employees",
+            "description": "Official documented endpoint; requires valid OAuth access token and directory permission. Maps to general API contract coverage (not UI login requirement).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP status matches documented outcome\", function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test(\"Response time under exploratory 5000 ms threshold\", function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"json\");",
+                  "});",
+                  "pm.test(\"Response body is parsable JSON\", function () {",
+                  "  pm.expect(() => pm.response.json()).not.to.throw();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "API-TC-002 Employee by empNumber \u2014 authorized",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v2/pim/employees/{{employeeNumber}}",
+            "description": "Official documented endpoint. Set employeeNumber to an authorized existing employee number.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP status matches documented outcome\", function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test(\"Response time under exploratory 5000 ms threshold\", function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"json\");",
+                  "});",
+                  "pm.test(\"Response body is parsable JSON\", function () {",
+                  "  pm.expect(() => pm.response.json()).not.to.throw();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "API-TC-003 Admin user by ID \u2014 authorized",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v2/admin/users/{{userId}}",
+            "description": "Official documented endpoint. Admin permission required; do not retrieve records without authorization.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP status matches documented outcome\", function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test(\"Response time under exploratory 5000 ms threshold\", function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"json\");",
+                  "});",
+                  "pm.test(\"Response body is parsable JSON\", function () {",
+                  "  pm.expect(() => pm.response.json()).not.to.throw();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 \u2014 Negative Read-Only Tests",
+      "description": "Strict expected statuses are working hypotheses until verified in your deployed version. Prefer isolated/sandbox deployment.",
+      "item": [
+        {
+          "name": "API-TC-004 Directory without access token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v2/directory/employees",
+            "description": "Expected 401 is a provisional API security expectation; some implementations return 403 or redirects. Record evidence and compare with approved API contract.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP status matches documented outcome\", function () {",
+                  "  pm.expect(pm.response.code).to.eql(401);",
+                  "});",
+                  "pm.test(\"Response time under exploratory 5000 ms threshold\", function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "API-TC-005 Missing employee record",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v2/pim/employees/{{missingEmployeeNumber}}",
+            "description": "Use an absent numeric ID within authorized environment. Official docs list 404 for missing employee.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP status matches documented outcome\", function () {",
+                  "  pm.expect(pm.response.code).to.eql(404);",
+                  "});",
+                  "pm.test(\"Response time under exploratory 5000 ms threshold\", function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"json\");",
+                  "});",
+                  "pm.test(\"Response body is parsable JSON\", function () {",
+                  "  pm.expect(() => pm.response.json()).not.to.throw();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "API-TC-006 Missing admin user record",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v2/admin/users/{{missingUserId}}",
+            "description": "Use an absent numeric ID with authorized admin token. Official docs list 404.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP status matches documented outcome\", function () {",
+                  "  pm.expect(pm.response.code).to.eql(404);",
+                  "});",
+                  "pm.test(\"Response time under exploratory 5000 ms threshold\", function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.include(\"json\");",
+                  "});",
+                  "pm.test(\"Response body is parsable JSON\", function () {",
+                  "  pm.expect(() => pm.response.json()).not.to.throw();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "API-TC-007 Invalid bearer token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v2/directory/employees",
+            "description": "Use a deliberately invalid token. Expected 401 requires contract verification.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "INVALID_TEST_TOKEN",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP status matches documented outcome\", function () {",
+                  "  pm.expect(pm.response.code).to.eql(401);",
+                  "});",
+                  "pm.test(\"Response time under exploratory 5000 ms threshold\", function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://opensource-demo.orangehrmlive.com/web/index.php",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employeeNumber",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "missingEmployeeNumber",
+      "value": "999999999",
+      "type": "string"
+    },
+    {
+      "key": "missingUserId",
+      "value": "999999999",
+      "type": "string"
+    }
+  ]
+}
