@@ -1,0 +1,35 @@
+name: OrangeHRM Playwright Login Tests
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  login-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 11-playwright-agentic-ai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run tests
+        run: npm test
+        env:
+          CI: 'true'
+          ORANGEHRM_USERNAME: ${{ secrets.ORANGEHRM_USERNAME }}
+          ORANGEHRM_PASSWORD: ${{ secrets.ORANGEHRM_PASSWORD }}
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orangehrm-playwright-results
+          path: |
+            11-playwright-agentic-ai/playwright-report/
+            11-playwright-agentic-ai/test-results/
+          retention-days: 14
